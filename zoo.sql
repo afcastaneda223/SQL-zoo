@@ -111,19 +111,37 @@ SELECT winner, subject
 --  SELECT within SELECT
 
 -- 1.
-
+SELECT name FROM world
+  WHERE population >
+     (SELECT population FROM world
+      WHERE name='Russia')
 -- 2.
-
+SELECT name FROM world
+WHERE continent = 'Europe'
+AND gdp/population > (SELECT gdp/population from world WHERE name = 'United Kingdom')
 -- 3.
-
+SELECT name, continent FROM world
+WHERE continent = (SELECT continent FROM world  WHERE name = 'Argentina') OR continent = (SELECT continent FROM world  WHERE name = 'Australia')
+ORDER BY name
 -- 4.
-
+SELECT name from world WHERE population > 
+(SELECT name FROM world  WHERE name = 'Canada'AND population <
+(SELECT name FROM world  WHERE name = 'Poland'))
 -- 5.
-
+SELECT name, 
+CONCAT(ROUND((population/(SELECT population FROM world WHERE name = 'Germany'))*100,0),'%')
+FROM world WHERE continent = 'Europe'
 -- 6.
-
+SELECT name
+FROM world
+WHERE gdp > ALL
+(SELECT gdp FROM world WHERE continent = 'Europe' AND gdp > 0)
 -- 7.
-
+SELECT continent, name, area FROM world x
+  WHERE area >= ALL
+    (SELECT area FROM world y
+        WHERE y.continent=x.continent
+          AND population>0)
 -- 8.
 
 -- 9.
@@ -133,28 +151,39 @@ SELECT winner, subject
 --  SUM and COUNT
 
 -- 1.
-
+SELECT SUM(population)
+FROM world
 -- 2.
+SELECT DISTINCT continent FROM world 
 
 -- 3.
-
+SELECT SUM(gdp) FROM world WHERE continent = 'Africa'
 -- 4.
-
+SELECT COUNT(name) FROM world WHERE area >= 1000000
 -- 5.
-
+SELECT SUM(population) FROM world WHERE name IN ('Estonia', 'Latvia', 'Lithuania')
 -- 6.
-
+SELECT continent, COUNT(name)FROM world
+GROUP BY continent
 -- 7.
-
+SELECT continent, COUNT(name)FROM world
+WHERE population >= 10000000
+GROUP BY continent
 -- 8.
+SELECT DISTINCT continent FROM world
+GROUP BY continent
+HAVING SUM(population) >= 100000000
 
 -- The JOIN operation
 
 
 -- 1.
-
+SELECT matchid, player FROM goal 
+ WHERE teamid = 'GER'
 -- 2.
-
+SELECT id,stadium,team1,team2
+  FROM game
+WHERE id = '1012'
 -- 3.
 
 -- 4.
