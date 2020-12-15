@@ -143,11 +143,21 @@ SELECT continent, name, area FROM world x
         WHERE y.continent=x.continent
           AND population>0)
 -- 8.
-
+SELECT continent, name FROM world x
+  WHERE name <= ALL
+    (SELECT name FROM world y
+        WHERE y.continent=x.continent)
 -- 9.
-
+SELECT name, continent, population FROM world x
+  WHERE 25000000 >= ALL
+    (SELECT population FROM world y
+        WHERE y.continent=x.continent)
 -- 10.
-
+SELECT name,continent FROM world x
+  WHERE population > ALL
+    (SELECT population*3 FROM world y
+        WHERE y.continent=x.continent
+          AND x.name!=y.name)
 --  SUM and COUNT
 
 -- 1.
@@ -289,55 +299,142 @@ JOIN actor
 ON (actor.id = casting.actorid)
 WHERE movie.yr = 1962 AND casting.ord = 1
 -- 11.
-
+SELECT yr,COUNT(title) FROM
+  movie JOIN casting ON movie.id=movieid
+        JOIN actor   ON actorid=actor.id
+WHERE name='Rock Hudson'
+GROUP BY yr
+HAVING COUNT(title) > 2
 -- 12.
-
+SELECT title,name FROM
+  movie JOIN casting ON (movie.id=movieid AND ord =1)
+        JOIN actor   ON actorid=actor.id
+WHERE movieid IN (SELECT movieid FROM casting
+WHERE actorid IN (
+  SELECT id FROM actor
+  WHERE name='Julie Andrews'))
 -- 13.
-
+SELECT actor.name 
+FROM actor 
+JOIN casting 
+ON ( casting.actorid = actor.id)
+WHERE ord = 1
+GROUP BY name
+HAVING COUNT(*) >= 15
 -- 14.
-
+SELECT title, COUNT(actorid) 
+FROM movie 
+JOIN casting 
+ON movie.id=movieid
+JOIN actor
+ON actorid=actor.id
+WHERE yr = 1978
+GROUP by title
+ORDER BY COUNT(actorid) DESC, title
 -- 15.
-
+SELECT DISTINCT name 
+FROM actor 
+JOIN casting 
+ON ( actor.id = casting.actorid)
+WHERE name != 'Art Garfunkel' AND movieid IN ((SELECT movieid FROM casting JOIN actor ON ( actor.id = casting.actorid)
+WHERE name =  'Art Garfunkel')) 
 -- Using Null
 
 -- 1.
-
+SELECT teacher.name 
+FROM teacher 
+WHERE dept IS NULL
 -- 2.
-
+SELECT teacher.name, dept.name
+ FROM teacher INNER JOIN dept
+           ON (teacher.dept=dept.id)
 -- 3.
-
+SELECT teacher.name, dept.name
+ FROM teacher LEFT JOIN dept
+           ON (teacher.dept=dept.id)
 -- 4.
-
+SELECT teacher.name, dept.name
+ FROM teacher RIGHT JOIN dept
+           ON (teacher.dept=dept.id)
 -- 5.
+SELECT name, COALESCE(mobile, '07986 444 2266')
+FROM teacher
 
 -- 6.
+SELECT teacher.name, COALESCE(dept.name, 'None')
+FROM teacher 
+LEFT JOIN dept 
+ON (dept.id = teacher.dept) 
 
 -- 7.
-
+SELECT COUNT(name), COUNT(mobile) FROM teacher 
 -- 8.
-
+SELECT dept.name, COUNT(teacher.name) 
+FROM teacher 
+RIGHT JOIN dept 
+ON ( dept.id = teacher.dept)
+GROUP BY dept.name 
 -- 9.
-
+SELECT teacher.name, 
+CASE WHEN dept = 1 OR dept = 2 THEN 'Sci' 
+ELSE 'Art' 
+END
+FROM teacher
 -- 10.
+SELECT teacher.name, 
+CASE WHEN dept = 1 OR dept = 2 
+THEN 'Sci' 
+WHEN dept = 3
+THEN 'ART' 
+ELSE 'None' 
+END
+FROM teacher
 
 -- Self join
 
 -- 1.
-
+SELECT COUNT(*) FROM stops 
 -- 2.
-
+SELECT id FROM stops WHERE name = 'Craiglockhart'
 -- 3.
-
+SELECT id, name 
+FROM stops, route
+WHERE id=stop
+AND company='LRT'
+AND num='4'
 -- 4.
-
+SELECT company, num, COUNT(*)
+FROM route WHERE stop=149 OR stop=53
+GROUP BY company, num
+HAVING COUNT(*) = 2
 -- 5.
-
+SELECT a.company, a.num, a.stop, b.stop
+FROM route a JOIN route b ON
+  (a.company=b.company AND a.num=b.num)
+WHERE a.stop=53 AND b.stop =149
 -- 6.
-
+SELECT a.company, a.num, stopa.name, stopb.name
+FROM route a JOIN route b ON
+  (a.company=b.company AND a.num=b.num)
+  JOIN stops stopa ON (a.stop=stopa.id)
+  JOIN stops stopb ON (b.stop=stopb.id)
+WHERE stopa.name='Craiglockhart' AND stopb.name='London Road'
 -- 7.
-
+SELECT DISTINCT a.company, a.num
+FROM route a JOIN route b ON
+  (a.company=b.company AND a.num=b.num)
+WHERE a.stop=115 AND b.stop =137
 -- 8.
-
+SELECT DISTINCT a.company, a.num
+FROM route a JOIN route b ON
+  (a.company=b.company AND a.num=b.num)
+  JOIN stops stopa ON (a.stop=stopa.id)
+  JOIN stops stopb ON (b.stop=stopb.id)
+WHERE stopa.name='Craiglockhart' AND stopb.name='Tollcross'
 -- 9.
-
--- 10.
+SELECT DISTINCT start.company, start.num
+FROM route start JOIN route end ON
+  (start.company=end.company AND start.num=end.num)
+  JOIN stops stopstart ON (start.stop=stopstart.id)
+  JOIN stops stopend ON (end.stop=stopend.id)
+WHERE stopstart.name='Craiglockhart' AND stopend.name='Tollcross'
